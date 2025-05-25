@@ -1,3 +1,19 @@
+"""
+JTI License v2.0
+
+This software is provided "as is", without warranty of any kind.
+
+You are free to use, modify, and share this software,
+but please give credit to the original author, Hamza.
+
+No commercial use without explicit permission.
+
+Have fun and keep hacking! 😎
+
+© 2025 Hamza
+"""
+
+
 import urequests
 import network
 import time
