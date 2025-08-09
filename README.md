@@ -1,8 +1,8 @@
-# uPB - MicroPython/CPython JSON Browser v1.1
+# uPB - MicroPython/CPython JSON Browser v1.2
 
-A tiny text-only browser for MicroPython boards with Wi‑Fi (like Pico W or ESP32) and now also runnable on desktop CPython for quick testing.
+A tiny text-only browser for MicroPython boards with Wi‑Fi (like Pico W or ESP32) and also runnable on desktop CPython for quick testing.
 
-It fetches JSON from APIs like Wikipedia, DuckDuckGo, XKCD, and Hacker News, then shows it on serial/terminal.
+It fetches JSON from APIs like Wikipedia, DuckDuckGo, XKCD, Hacker News, and more, then shows it on serial/terminal.
 
 ## Features
 - Wi‑Fi auto-connect on MicroPython
@@ -10,6 +10,7 @@ It fetches JSON from APIs like Wikipedia, DuckDuckGo, XKCD, and Hacker News, the
 - DuckDuckGo instant answers
 - XKCD comics (latest or specific number)
 - Hacker News top stories (top 5)
+- Extra APIs: quote, joke, weather, define, crypto prices, world time, your IP, cat facts, advice
 - Runs on serial console/terminal, no HTML parsing
 
 ## Quick start (desktop / CPython)
@@ -33,6 +34,15 @@ It fetches JSON from APIs like Wikipedia, DuckDuckGo, XKCD, and Hacker News, the
 - `ddg <query>`
 - `xkcd [comic_number]`
 - `hn`
+- `quote`
+- `joke`
+- `weather <place>`
+- `define <word>`
+- `price <symbols>` (e.g. `price btc eth sol`)
+- `time [zone]` (e.g. `time Europe/Berlin` or just `time`)
+- `ip`
+- `cat`
+- `advice`
 - `reload`
 - `quit`
 
