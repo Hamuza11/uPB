@@ -124,7 +124,6 @@ def _http_get_text(url: str, timeout_seconds: int = 10, headers: Dict[str, str] 
         except Exception:
             pass
 
-
 # --- WiFi setup ---
 def connect_wifi(ssid: str, password: str, timeout_seconds: int = 20) -> None:
     """Connect to Wi‑Fi on MicroPython. No-op on CPython.
@@ -254,7 +253,6 @@ def fetch_quote() -> Tuple[str, str]:
         return f"Quote by {author}", content
     except Exception as exc:
         return "Error", "Quote fetch failed: " + str(exc)
-
 
 def fetch_joke() -> Tuple[str, str]:
     """Random joke from icanhazdadjoke."""
@@ -445,6 +443,7 @@ def fetch_advice() -> Tuple[str, str]:
         return "Advice", slip.get("advice", "No advice.")
     except Exception as exc:
         return "Error", "Advice fetch failed: " + str(exc)
+
 
 
 # --- Main uPB CLI loop ---
