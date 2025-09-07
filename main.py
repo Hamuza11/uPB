@@ -91,6 +91,39 @@ def _http_get_json(url: str, timeout_seconds: int = 10, headers: Dict[str, str] 
             pass
 
 
+def _http_get_text(url: str, timeout_seconds: int = 10, headers: Dict[str, str] | None = None) -> str:
+    """GET a URL and return text body, with robust closing and error handling."""
+    response = None
+    try:
+        try:
+            response = _requests.get(url, timeout=timeout_seconds, headers=headers)  # type: ignore[call-arg]
+        except TypeError:
+            if headers:
+                response = _requests.get(url, headers=headers)  # type: ignore[misc]
+            else:
+                response = _requests.get(url)  # type: ignore[misc]
+
+        status_code = getattr(response, "status_code", 200)
+        if status_code and int(status_code) >= 400:
+            raise RuntimeError(f"HTTP {status_code} for URL: {url}")
+        # Try text property; fallback to content decode
+        try:
+            return response.text  # type: ignore[attr-defined]
+        except Exception:
+            try:
+                content = getattr(response, "content", b"")
+                if isinstance(content, bytes):
+                    return content.decode("utf-8", errors="replace")
+                return str(content)
+            except Exception:
+                return ""
+    finally:
+        try:
+            if response is not None:
+                response.close()
+        except Exception:
+            pass
+
 # --- WiFi setup ---
 def connect_wifi(ssid: str, password: str, timeout_seconds: int = 20) -> None:
     """Connect to Wi‑Fi on MicroPython. No-op on CPython.
@@ -221,7 +254,6 @@ def fetch_quote() -> Tuple[str, str]:
     except Exception as exc:
         return "Error", "Quote fetch failed: " + str(exc)
 
-
 def fetch_joke() -> Tuple[str, str]:
     """Random joke from icanhazdadjoke."""
     try:
@@ -314,6 +346,64 @@ def fetch_prices(symbols: str) -> Tuple[str, str]:
         return "Error", "Price fetch failed: " + str(exc)
 
 
+def fetch_stocks(symbols: str) -> Tuple[str, str]:
+    """Stock quotes via Yahoo Finance public endpoint.
+
+    Usage: stock AAPL MSFT TSLA
+    """
+    tokens = [t.upper() for t in symbols.replace(",", " ").split() if t.strip()]
+    if not tokens:
+        tokens = ["AAPL", "MSFT"]
+    symbols_param = ",".join(tokens)
+    headers = {"User-Agent": "uPB/1.2 (+https://github.com)"}
+
+    # Try Yahoo Finance JSON first
+    try:
+        data = _http_get_json(
+            f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={_urlencode_plus(symbols_param)}",
+            headers=headers,
+        )
+        results = (data.get("quoteResponse") or {}).get("result") or []
+        lines: list[str] = []
+        for q in results:
+            sym = q.get("symbol", "?")
+            price = q.get("regularMarketPrice")
+            change = q.get("regularMarketChange")
+            percent = q.get("regularMarketChangePercent")
+            currency = q.get("currency", "")
+            if price is None:
+                continue
+            def fmt(x: Any) -> str:
+                return f"{x:+.2f}" if isinstance(x, (int, float)) else "n/a"
+            lines.append(f"{sym}: {price} {currency} ({fmt(change)}, {fmt(percent)}%)")
+        if lines:
+            return "Stocks", "\n".join(lines)
+        # Fallthrough to Stooq if empty
+    except Exception:
+        pass
+
+    # Fallback: Stooq CSV (no key). Fields: Symbol,Date,Time,Open,High,Low,Close,Volume,Name
+    try:
+        csv = _http_get_text(
+            f"https://stooq.com/q/l/?s={_urlencode_plus(symbols_param)}&f=sd2t2ohlcvn&h=e",
+            headers=headers,
+        )
+        lines_out: list[str] = []
+        for idx, line in enumerate(csv.splitlines()):
+            parts = [p.strip() for p in line.split(",")]
+            if not parts or parts[0].lower() in ("symbol", "no data"):
+                continue
+            if len(parts) < 8:
+                continue
+            sym, _date, _time, o, h, l, c, v = parts[:8]
+            if c in ("N/D", "-", ""):
+                continue
+            lines_out.append(f"{sym}: {c} (O:{o} H:{h} L:{l})")
+        return "Stocks", "\n".join(lines_out) if lines_out else "No stock data found."
+    except Exception as exc:
+        return "Error", "Stock fetch failed: " + str(exc)
+
+
 def fetch_time(zone: str | None = None) -> Tuple[str, str]:
     """World time via worldtimeapi.org. If zone omitted, uses IP-based zone."""
     try:
@@ -353,6 +443,7 @@ def fetch_advice() -> Tuple[str, str]:
         return "Advice", slip.get("advice", "No advice.")
     except Exception as exc:
         return "Error", "Advice fetch failed: " + str(exc)
+
 
 
 # --- Main uPB CLI loop ---
@@ -429,6 +520,13 @@ def upb_main() -> None:
             print("\n=== " + title + " ===")
             print(text + "\n")
             continue
+        elif cmd.startswith("stock"):
+            parts = cmd.split(maxsplit=1)
+            syms = parts[1] if len(parts) > 1 else "AAPL MSFT"
+            title, text = fetch_stocks(syms)
+            print("\n=== " + title + " ===")
+            print(text + "\n")
+            continue
         elif cmd.startswith("time"):
             parts = cmd.split(maxsplit=1)
             zone = parts[1] if len(parts) > 1 else None
@@ -453,7 +551,7 @@ def upb_main() -> None:
             continue
         else:
             print(
-                "Unknown command. Use: search <term>, ddg <query>, xkcd [num], hn, quote, joke, weather <place>, define <word>, price <symbols>, time [zone], ip, cat, advice, reload, or quit."
+                "Unknown command. Use: search <term>, ddg <query>, xkcd [num], hn, quote, joke, weather <place>, define <word>, price <symbols>, stock <symbols>, time [zone], ip, cat, advice, reload, or quit."
             )
             continue
 

@@ -10,7 +10,7 @@ It fetches JSON from APIs like Wikipedia, DuckDuckGo, XKCD, Hacker News, and mor
 - DuckDuckGo instant answers
 - XKCD comics (latest or specific number)
 - Hacker News top stories (top 5)
-- Extra APIs: quote, joke, weather, define, crypto prices, world time, your IP, cat facts, advice
+- Extra APIs: quote, joke, weather, define, crypto prices, stocks, world time, your IP, cat facts, advice
 - Runs on serial console/terminal, no HTML parsing
 
 ## Quick start (desktop / CPython)
@@ -39,6 +39,7 @@ It fetches JSON from APIs like Wikipedia, DuckDuckGo, XKCD, Hacker News, and mor
 - `weather <place>`
 - `define <word>`
 - `price <symbols>` (e.g. `price btc eth sol`)
+- `stock <symbols>` (e.g. `stock AAPL MSFT TSLA`)
 - `time [zone]` (e.g. `time Europe/Berlin` or just `time`)
 - `ip`
 - `cat`
